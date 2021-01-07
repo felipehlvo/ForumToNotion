@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[4]:
-
-
 import notion
 from bs4 import BeautifulSoup
 from markdownify import markdownify as md
@@ -24,11 +18,11 @@ from notion.client import *
 from notion.block import *
 from notion.client import NotionClient
 
+# Optionally, to speed up the process, define the token_v2 and the collection view below
 
-# In[13]:
+token = "" # Puth the token_v2 here as a string
+link_cv = "" # Put the collection view link here as a string
 
-
-## RUN THIS CELL
 
 def AccessNotion():
     #Security
@@ -232,22 +226,10 @@ def login():
 
     time.sleep(10)
     driver.switch_to.window(main_window_handle)
-    
+   
 
 
-# In[11]:
 
-
-# Optionally, to speed up the process, define the token_v2 and the collection view below
-
-token = "" # Puth the token_v2 here as a string
-link_cv = "" # Put the collection view link here as a string
-
-
-# In[12]:
-
-
-## Run this cell to start the program
 
 AccessNotion()
 
