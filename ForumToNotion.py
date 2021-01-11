@@ -1,3 +1,35 @@
+
+
+# In[1]:
+import subprocess
+import sys
+
+def install(package):
+    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+try:
+    import notion
+except ImportError:
+    install("notion")
+try:
+    import bs4
+except ImportError:
+    install("bs4")
+
+try:
+    import markdownify
+except ImportError:
+    install("markdownify")
+
+try:
+    import selenium
+except ImportError:
+    install("selenium")
+
+try:
+    import webdriver_manager
+except ImportError:
+    install("webdriver_manager")
+
 import notion
 from bs4 import BeautifulSoup
 from markdownify import markdownify as md
@@ -8,52 +40,70 @@ import time
 from PIL import Image
 import io
 import requests
+import time
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.options import Options  
 from datetime import datetime
 from notion.client import *
 from notion.block import *
 from notion.client import NotionClient
 
-# Optionally, to speed up the process, define the token_v2 and the collection view below
 
-token = "" # Puth the token_v2 here as a string
-link_cv = "" # Put the collection view link here as a string
 
+
+## RUN THIS CELL
 
 def AccessNotion():
     #Security
     global client
+    global token
+    global credentials
     try:
         client = NotionClient(token_v2 = token)
+        print("Success")
+        time.sleep(1)
     except:
         pass
+        
     while ('client' not in globals()) or type(client) != notion.client.NotionClient:
         token = input("Please paste your Notion token: ")
         try:
             client = NotionClient(token_v2 = token)
+            print("ACCESS GRANTED. \n")
+            save_token = input("Do you want to save this credential for future use? (Yes/No)")
+            if save_token == "Yes":
+                credentials['token'] = token
         except:
             print("Something went wrong. Is your token correct?")
-    print("ACCESS GRANTED.")
+    
+    
 
 def GetCollectionView():
     global cv
+    global link_cv
+    global credentials
     # Get Colletions
     try:
         cv = client.get_collection_view(link_cv)
+        time.sleep(1)
     except:
         pass
     while ('cv' not in globals()) or ((type(cv) != notion.collection.BoardView) and (type(cv) !=notion.collection.TableView)):
         link_cv = input("Please paste link to collection view: ")
         try:
             cv = client.get_collection_view(link_cv)
+            print("DATABASE FOUND.")
+            save_link_cv = input("Do you want to save this credential for future use? (Yes/No)")
+            if save_link_cv == "Yes":
+                credentials['link_cv'] = link_cv
         except:
             print("Something went wrong. Is your link correct?")
-    print("DATABASE FOUND.")
-
+    
+        
 def CreatePage():
     print("Creating Page...")
     global session
@@ -151,7 +201,7 @@ def CreateStudyGuide(color = "blue"):
     divider2 = page.children.add_new(DividerBlock)
 
     prestudy = soup.find_all('h3')[3]
-    study_text = prestudy.find_previous_siblings(['p', 'pre'])
+    study_text = prestudy.find_previous_siblings(['p', 'pre', 'ul', 'ol'])
 
     page.children.add_new(TextBlock, title=html_to_markdown(study_text[:-count]))
     print("Done \n")
@@ -191,7 +241,10 @@ def html_to_markdown(html):
     return markdown
 
 def login():
-    driver.get("https://forum.minerva.kgi.edu/")
+    global mail_address
+    global password
+    global credentials
+    global driver
     
     main_window_handle = None
     while not main_window_handle:
@@ -209,70 +262,125 @@ def login():
 
     driver.switch_to.window(signin_window_handle)
     
-    mail_address = input("E-mail: ")
-    password = input("Password: ")
+
     
+    if mail_address == "fff":
+        mail_address = input("E-mail: ")
+
     try:
-        
+
         driver.find_element_by_id("identifierId").send_keys(mail_address)
         driver.find_element_by_id("identifierNext").click()
-        driver.implicitly_wait(2)
+        element = WebDriverWait(driver, 4).until(
+                   EC.presence_of_element_located((By.NAME, "password")))
+        
+        if mail_address == "fff":
+            save_email = input("Do you want to save this credential for future use? (Yes/No)")
+            if save_email == "Yes":
+                credentials['mail_address'] = mail_address
+            
+        if password == "fff":
+            password = input("Password: ")
+        try:
+            #print("test")
+            time.sleep(1)
+            driver.find_element_by_name("password").send_keys(password)
+            #print("here")
+            driver.find_element_by_id("passwordNext").click()
+           # print('d')
+            if password == "fff":
+                save_password = input("Do you want to save this credential for future use? (Potential seurity risks) (Yes/No)")
+                
+                if save_password == "Yes":
+                    credentials['password'] = password        
 
-
-        driver.find_element_by_name("password").send_keys(password)
-        driver.find_element_by_id("passwordNext").click()
+        except:
+            print("Wrong password")
+        
     except:
-        "Wrong credentials"
+        print("Wrong email")
+    
+
+    
 
     time.sleep(10)
     driver.switch_to.window(main_window_handle)
-   
+    
 
 
 
+
+
+
+try: 
+    text = open('credentials.txt')
+    credentials = eval(text.read())
+    token = credentials['token']
+    link_cv = credentials['link_cv']
+    mail_address = credentials['mail_address']
+    password = credentials['password']
+except:
+    raise ValueError("Couldn't read credentials")
+
+
+
+## Run this cell to start the program
 
 AccessNotion()
 
 GetCollectionView()
 
-### AUTOMATIC LOGIN, (currently not working) ### 
+# AUTOMATIC LOGIN, (currently not working) ###
 
-# try:
-#     del test_login
-# except:
-#     pass
-    
-# while ("test_login" not in locals()) or (test_login == None):
-#     driver = webdriver.Chrome(ChromeDriverManager().install())
-#     wait = WebDriverWait(driver, 10)
-#     login()
-
-    
-#     soup = BeautifulSoup(driver.page_source, "html.parser")
-#     test_login = soup.find('a', 'navigation-link ')
-#     if test_login == None:
-#         print("Something went wrong with the login")
-
-###    ########  ####
-
-# Opening Chrome
+# Headless, not working
+#options = Options()
+#options.add_argument("--headless")
 driver = webdriver.Chrome(ChromeDriverManager().install())
+wait = WebDriverWait(driver, 10)
 driver.get("https://forum.minerva.kgi.edu/")
+
+print("Answer all questions with 'Yes' capitalized")
+
+
+try:
+    del test_login
+except:
+    pass
+   
+
+try:
+    login()
+except:
+    pass
+
+soup = BeautifulSoup(driver.page_source, "html.parser")
+test_login = soup.find('a', 'navigation-link ')
+if test_login == None:
+    print("Something might have gone wrong with the login. Please login manually")
+
+
+
 print("Go to the newly opened Chrome page and login to Forum. After that, come back to the notebook and follow the code outputs.")
 
 # Wait untl login
 try:
     element = WebDriverWait(driver, 100).until(
-        EC.presence_of_element_located((By.CLASS_NAME, "navigation-link "))
-    )
+            EC.presence_of_element_located((By.CLASS_NAME, "navigation-link "))
+        )
 except:
     print("You took too long to login")
     driver.quit()
 
 
+text.close()
+text = open('credentials.txt', 'w')      
+text.write(str(credentials))
+text.close()
 make_another = "Yes"
-url = input("URL to class (type 'stop' to exit): ")
-while make_another == 'Yes':
+
+
+while make_another == "Yes":
+    url = input("URL to class (type 'stop' to exit): ")
     try:
         driver.get(url)
     except:
@@ -293,7 +401,7 @@ while make_another == 'Yes':
     else:
         CreatePage()
         
-    while make_another != ("Yes" or "No"):
-        make_another = input("Another class? (Yes/No): ")
     
+    make_another = input("Another class? (Yes/No): ")
 
+print("Have fun!")
