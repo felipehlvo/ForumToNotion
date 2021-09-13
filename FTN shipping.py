@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+
 import subprocess
 import sys
 
@@ -10,7 +10,7 @@ def install(package):
 try:
     import notion
 except ImportError:
-    install("notion")
+    install("git+https://github.com/jamalex/notion-py.git@refs/pull/294/merge")
 try:
     import bs4
 except ImportError:
@@ -52,8 +52,6 @@ from notion.block import *
 from notion.client import NotionClient
 
 
-
-## RUN THIS CELL
 
 def AccessNotion():
     #Security
